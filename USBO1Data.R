@@ -43,7 +43,7 @@ View(bo2)
 
 #-- MET_SOIL
 #SWC        (%): Soil water content (volumetric), range 0-100
-#TS          (deg C): Soil temperature
+#TS          (deg C): Soil temperature 
 #WTD        (m): Water table depth
 
 #-- MET_RAD
