@@ -1,8 +1,13 @@
 #bo1 is the Ameriflux data for US-Bo1 (link: https://ameriflux.lbl.gov/sites/siteinfo/US-Bo1)
 #Data from 1996 to present
-bo1 <- read.csv("D:\\Research\\US_BO1_2_FluxTower\\AMF_US-Bo1_BASE-BADM_2-1\\AMF_US-Bo1_BASE_HH_2-1.csv")
-head(bo1)
+bo1 <- read.table("D:\\Research\\US_BO1_2_FluxTower\\AMF_US-Bo1_BASE-BADM_2-1\\AMF_US-Bo1_BASE_HH_2-1.csv")
+bo2 <- read.csv("D:\\Research\\US_BO1_2_FluxTower\\AMF_US-Bo1_BASE-BADM_2-1\\AMF_US-Bo1_BASE_HH_2-1.csv", sep=";")
+head(bo2)
+View(bo2)
+#lots of -9999s!
 
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #Variable List from the metadata
 #-- TIMEKEEPING
 #TIMESTAMP_START (YYYYMMDDHHMM): ISO timestamp start of averaging period
@@ -57,6 +62,8 @@ head(bo1)
 #NEE        (umolCO2 m-2 s-1): Net Ecosystem Exchange
 #RECO        (umolCO2 m-2 s-1): Ecosystem Respiration
 #GPP        (umolCO2 m-2 s-1): Gross Primary Productivity
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 #Packages: Raster, GDal
 install.packages("raster")
