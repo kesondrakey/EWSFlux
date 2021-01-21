@@ -3,8 +3,11 @@
 bo1 <- read.table("D:\\Research\\US_BO1_2_FluxTower\\AMF_US-Bo1_BASE-BADM_2-1\\AMF_US-Bo1_BASE_HH_2-1.csv")
 bo2 <- read.csv("D:\\Research\\US_BO1_2_FluxTower\\AMF_US-Bo1_BASE-BADM_2-1\\AMF_US-Bo1_BASE_HH_2-1.csv", sep=";")
 head(bo2)
+tail(bo2)
 View(bo2)
-#lots of -9999s!
+#lots of -9999s
+
+   
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,6 +66,8 @@ View(bo2)
 #RECO        (umolCO2 m-2 s-1): Ecosystem Respiration
 #GPP        (umolCO2 m-2 s-1): Gross Primary Productivity
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 
 
 #Packages: Raster, GDal
