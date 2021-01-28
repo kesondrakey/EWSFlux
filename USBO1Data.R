@@ -211,14 +211,18 @@ DATA5 <- DATA4
 
 
 #mean by year
+mean_na <- function(x) {
+  mean(x,na.rm=T)
+}
+
 #alot of data unavailable
 DATA6 <- DATA5 %>% group_by(start_year) %>%       
-  summarise_at(.vars = names(.)[1:30],.funs = c(mean="mean"))
-
+  summarise_at(.vars = names(.)[1:30],.funs = c(mean_na="mean"))
+na.rm=TRUE
 View(DATA6)
 
 #mean by year; doesnt seem to work?
 DATA7 <- DATA5 %>% group_by(start_month) %>%       
-  summarise_at(.vars = names(.)[1:30],.funs = c(mean="mean"))
-
+  summarise_at(.vars = names(.)[1:30],.funs = c(mean_na="mean"))
+View(DATA7)
 
