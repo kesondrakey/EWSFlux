@@ -1,14 +1,5 @@
 #bo1 is the Ameriflux data for US-Bo1 (link: https://ameriflux.lbl.gov/sites/siteinfo/US-Bo1)
 #Data from 1996 to present
-bo1 <- read.table("D:\\Research\\US_BO1_2_FluxTower\\AMF_US-Bo1_BASE-BADM_2-1\\AMF_US-Bo1_BASE_HH_2-1.csv")
-bo2 <- read.csv("D:\\Research\\US_BO1_2_FluxTower\\AMF_US-Bo1_BASE-BADM_2-1\\AMF_US-Bo1_BASE_HH_2-1.csv", sep=";")
-head(bo2)
-tail(bo2)
-View(bo2)
-#lots of -9999s
-
-   
-
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #Variable List from the metadata
@@ -42,15 +33,17 @@ View(bo2)
 #PA             (kPa): Atmospheric pressure
 #RH             (%): Relative humidity, range 0-100
 #TA             (deg C): Air temperature
-#VPD        (hPa): Vapor Pressure Deficit
+#VPD        (hPa): Vapor Pressure Deficit *****
 
 #-- MET_SOIL
 #SWC        (%): Soil water content (volumetric), range 0-100
-#TS          (deg C): Soil temperature 
+#TS          (deg C): Soil temperature ****
+#^soil temp can indicate best planting dates
+
 #WTD        (m): Water table depth
 
 #-- MET_RAD
-#NETRAD       (W m-2): Net radiation
+#NETRAD       (W m-2): Net radiation***********
 #PPFD_IN      (umolPhoton m-2 s-1): Photosynthetic photon flux density, incoming
 #PPFD_OUT     (umolPhoton m-2 s-1): Photosynthetic photon flux density, outgoing
 #SW_IN       (W m-2): Shortwave radiation, incoming
@@ -64,16 +57,112 @@ View(bo2)
 #-- PRODUCTS
 #NEE        (umolCO2 m-2 s-1): Net Ecosystem Exchange
 #RECO        (umolCO2 m-2 s-1): Ecosystem Respiration
-#GPP        (umolCO2 m-2 s-1): Gross Primary Productivity
+#GPP        (umolCO2 m-2 s-1): Gross Primary Productivity *************
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
-
 #Packages: Raster, GDal
-install.packages("raster")
-install.packages("rgdal")
+#install.packages("raster")
+#install.packages("rgdal")
+#install.packages("lubridate")
+#install.packages("ggplot2")
+#install.packages("dplyr")
+
+library("ggplot2")
+library("dplyr")
 library("raster")
+library ("lubridate")
 library("rgdal")
 
-#lots of -9999 in the data; what is this saying?
+#data is databo1
+setwd("D:/Research/US_BO1_2_FluxTower/R")
+
+databo1 <- read.csv("AMF_US-Bo1_BASE_HH_2-1.csv", header = TRUE)
+head(databo1)
+
+
+#header is broken
+#fix from here (https://stackoverflow.com/questions/38311808/more-columns-than-column-names/38311962)
+
+#read only the first row from the table
+NAMES <- read.table("AMF_US-Bo1_BASE_HH_2-1.csv", nrow = 1, stringsAsFactors = FALSE, sep = ",")
+
+
+#skip the first row in the table
+DATA <- read.table("AMF_US-Bo1_BASE_HH_2-1.csv", skip = 1, stringsAsFactors = FALSE, sep = ",")
+
+#combine them
+names(DATA) <- NAMES
+
+#it worked!
+head(DATA)
+View(DATA)
+
+#clone
+DATA1 <- DATA
+head(DATA1)
+
+#double header in the actual headeer and in row 1 so will delete row 1
+DATA2 <- DATA1[- 1, ] 
+#View(DATA2)
+
+
+#dealing with time
+#TIMESTAMP_START (YYYYMMDDHHMM): ISO timestamp start of averaging period
+#TIMESTAMP_END   (YYYYMMDDHHMM): ISO timestamp end of averaging period
+#timezone GMT-6
+
+#date data now looks like Y-m-d... couldn't get the time (hour/min) to work
+DATA2$TIMESTAMP_START <- as.Date(as.character(DATA2$TIMESTAMP_START), format="%Y%m%d")
+DATA2$TIMESTAMP_END <- as.Date(as.character(DATA2$TIMESTAMP_END), format = "%Y%m%d")
+View(DATA2)
+DATA3 <- DATA2
+
+#lots of -9999 which are actually NAs
+DATA3[DATA3 == -9999] <- NA
+View(DATA3)
+
+#on to the averages
+#tutorial: https://www.earthdatascience.org/courses/earth-analytics/time-series-data/summarize-time-series-by-month-in-r/ 
+options(stringsAsFactors = FALSE)
+
+
+str(DATA3)
+
+#all my numbers are characters!
+DATA3$USTAR <- as.numeric(DATA3$USTAR)
+summary(DATA3$USTAR)
+
+#TA             (deg C): Air temperature
+DATA3$TA <- as.numeric(DATA3$TA)
+summary(DATA3$TA)
+
+### only going to do ones I am interested in... 
+#for now...
+
+#VPD        (hPa): Vapor Pressure Deficit *****
+DATA3$VPD <- as.numeric(DATA3$VPD)
+summary(DATA3$VPD)
+
+
+
+#goal: average TA and VPD over each month for all the years... data collected says "to present" but years available end at 2008
+tail(DATA3)
+
+# plot the data using ggplot2 and pipes
+DATA3 %>%
+  ggplot(aes(x = TIMESTAMP_START, y = TA)) +
+  geom_point(color = "darkorchid4") +
+  labs(title = "Temperature (c) at the BO-1 Flux Site",
+       subtitle = "Illinois, 1996-2008",
+       y = "Temperature (C)",
+       x = "Date") + theme_bw(base_size = 15)
+
+
+DATA3 %>%
+  ggplot(aes(x = TIMESTAMP_START, y = VPD)) +
+  geom_point(color = "darkorchid4") +
+  labs(title = "VPD at the BO-1 Flux Site",
+       subtitle = "Illinois, 1996-2008",
+       y = "VPD (hPa)",
+       x = "Date") + theme_bw(base_size = 15)
+
