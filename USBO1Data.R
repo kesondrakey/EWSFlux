@@ -136,13 +136,38 @@ summary(DATA3$USTAR)
 DATA3$TA <- as.numeric(DATA3$TA)
 summary(DATA3$TA)
 
-### only going to do ones I am interested in... 
-#for now...
-
 #VPD        (hPa): Vapor Pressure Deficit *****
 DATA3$VPD <- as.numeric(DATA3$VPD)
 summary(DATA3$VPD)
 
+DATA3$WD <- as.numeric(DATA3$WD)
+DATA3$WS <- as.numeric(DATA3$WS)
+DATA3$NEE_PI <- as.numeric(DATA3$NEE_PI)
+DATA3$FC <- as.numeric(DATA3$FC)
+DATA3$SC <- as.numeric(DATA3$SC)
+DATA3$H <- as.numeric(DATA3$H)
+DATA3$SH <- as.numeric(DATA3$SH)
+DATA3$LE <- as.numeric(DATA3$LE)
+DATA3$SLE <- as.numeric(DATA3$SLE)
+DATA3$G <- as.numeric(DATA3$G)
+DATA3$TS_1 <- as.numeric(DATA3$TS_1)
+DATA3$TS_2 <- as.numeric(DATA3$TS_2)
+DATA3$P <- as.numeric(DATA3$P)
+DATA3$RH <- as.numeric(DATA3$RH)
+DATA3$PA <- as.numeric(DATA3$PA)
+DATA3$CO2_1 <- as.numeric(DATA3$CO2_1)
+DATA3$CO2_2 <- as.numeric(DATA3$CO2_2)
+DATA3$VPD_PI <- as.numeric(DATA3$VPD_PI)
+DATA3$SWC_1 <- as.numeric(DATA3$SWC_1)
+DATA3$SWC_2 <- as.numeric(DATA3$SWC_2)
+DATA3$NETRAD <- as.numeric(DATA3$NETRAD)
+DATA3$PPFD_IN <- as.numeric(DATA3$PPFD_IN)
+DATA3$SW_IN <- as.numeric(DATA3$SW_IN)
+DATA3$SW_DIF <- as.numeric(DATA3$SW_DIF)
+DATA3$PPFD_OUT <- as.numeric(DATA3$PPFD_OUT)
+DATA3$SW_OUT <- as.numeric(DATA3$SW_OUT)
+DATA3$LW_IN <- as.numeric(DATA3$LW_IN)
+DATA3$LW <- as.numeric(DATA3$LW)
 
 
 #goal: average TA and VPD over each month for all the years... data collected says "to present" but years available end at 2008
@@ -165,4 +190,35 @@ DATA3 %>%
        subtitle = "Illinois, 1996-2008",
        y = "VPD (hPa)",
        x = "Date") + theme_bw(base_size = 15)
+
+
+
+####separate months and years
+DATA4 <- DATA3
+
+##add column for start_year and start_month
+DATA4[, "start_year"] <- format(DATA4[,"TIMESTAMP_START"], "%Y")
+DATA4[, "start_month"] <- format(DATA4[,"TIMESTAMP_START"], "%m")
+View(DATA4)
+
+##add column for end_year and end_month
+DATA4[, "end_year"] <- format(DATA4[,"TIMESTAMP_END"], "%Y")
+DATA4[, "end_month"] <- format(DATA4[,"TIMESTAMP_END"], "%m")
+View(DATA4)
+
+
+DATA5 <- DATA4
+
+
+#mean by year
+#alot of data unavailable
+DATA6 <- DATA5 %>% group_by(start_year) %>%       
+  summarise_at(.vars = names(.)[1:30],.funs = c(mean="mean"))
+
+View(DATA6)
+
+#mean by year; doesnt seem to work?
+DATA7 <- DATA5 %>% group_by(start_month) %>%       
+  summarise_at(.vars = names(.)[1:30],.funs = c(mean="mean"))
+
 
