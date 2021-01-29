@@ -217,12 +217,48 @@ mean_na <- function(x) {
 
 #alot of data unavailable
 DATA6 <- DATA5 %>% group_by(start_year) %>%       
-  summarise_at(.vars = names(.)[1:30],.funs = c(mean_na="mean"))
-na.rm=TRUE
+  summarise_at(.vars = names(.)[1:30],.funs = mean,na.rm=TRUE)
+
 View(DATA6)
 
 #mean by year; doesnt seem to work?
 DATA7 <- DATA5 %>% group_by(start_month) %>%       
-  summarise_at(.vars = names(.)[1:30],.funs = c(mean_na="mean"))
+  summarise_at(.vars = names(.)[1:30],.funs = mean,na.rm=TRUE)
+
 View(DATA7)
 
+
+#SPEI Index R tutorial https://rstudio-pubs-static.s3.amazonaws.com/202764_0f164cddb7fd415eae1389ea27cec447.html
+install.packages("SPEI")
+library("SPEI")
+
+#What you need to calculate evapotranspiration from the Penman-Monteith equation
+#latitude for US-bo1 is 40.0062
+
+#The FAO Penman-Monteith method to estimate ETo can be
+#derived [Eq. 1]:
+
+#ETo = reference evapotranspiration, mm day-1
+
+#Rn= net radiation at the crop surface, MJ m-2d-1
+#G = soil heat flux density, MJ m-2d-1
+#T = mean daily air temperature at 2 m height, ºC;
+#u2= wind speed at 2 m height, m s-1 
+#es= saturation vapor pressure, kPa;
+#ea= actual vapor pressure, kPa;
+#es-ea= saturation vapor pressure deficit, kPa;
+#î = slope of the vapor pressure curve, kPa ºC-1
+#³ = psychrometric constant, kPa ºC-1
+
+
+#what our data has
+#NETRAD       (W m-2): Net radiation
+#G           (W m-2): Soil heat flux
+#TA             (deg C): Air temperature
+#WS            (m s-1): Wind speed
+#VPD        (hPa): Vapor Pressure Deficit
+
+
+#attempt without unit conversion (let's see if it works)
+PET = thornthwaite(DATA5$T,40.0062)
+#nope
