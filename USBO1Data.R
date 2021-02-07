@@ -254,10 +254,20 @@ library(dplyr)
 
 Year_2000 <- DATA5 %>% filter(start_week_year == "2000")
 View(Year_2000)
+summary(Year_2000)
+#all things are characters
+Year_2000$start_weekID <- as.numeric(Year_2000$start_weekID)
+
+
+
+
+#####This part of the code breaks the week ID, instead of it being 1:52, it turns into 1:12 and copies the months???
+
+
 
 #average each week in year 2000; deletes year/month column... hmm.. 
-WeeklyAverage_2000 <- Year_2000 %>% group_by(start_weekID) %>%       
-  summarise_at(.vars = names(.)[1:50],.funs = mean,na.rm=TRUE)
+WeeklyAverage_2000 <- Year_2000 %>% group_by(Year_2000$start_weekID) %>%       
+  summarise_at(.vars = names(.)[1:100],.funs = mean,na.rm=TRUE)
 
 View(WeeklyAverage_2000)
 
@@ -403,7 +413,7 @@ if (length(psiH) == length(stab)) {
   print ("check the dataset")
 }
 
-#ISSUE HERE: 
+
 ##1.7 ga (m/s), Gs (m/s) calculation
 #atmospheric stability correction
 ga <- df_PM$U * k^2 /((log((zm-zd)/zo) + psiH)^2) #m/s
@@ -448,6 +458,7 @@ PETpt_mmday <- 1.26 * delta*df_PM$Rn / (Lv * (delta + gamma)) * 86400
 df_PM$PETpt_mmday <- PETpt_mmday # Priestley-Taylor PET mm/day
 PETpt_inweek <- PETpt_mmday * 7 * 0.03937
 df_PM$PETpt_inweek <- PETpt_inweek # Priestley-Taylor PET inch/week
+
 ##1.10 calculate Penman-Monteith ET
 ETpm_mmday <- 86400 * (delta*df_PM$Rn + rho_a*cp*ga*df_PM$VPD) / (( delta + gamma*(1+(ga/Gs))) * Lv)
 ETpm_inweek <- ETpm_mmday * 7 * 0.03937 #inch/week
@@ -455,4 +466,14 @@ df_PM$ETpm_mmday <- ETpm_mmday
 df_PM$ETpm_inweek <- ETpm_inweek 
 
 write.csv(df_PM,file = "2000_ET.csv",row.names = FALSE)
+
+ggplot(data = df_PM, aes(x = df_PM$WeekID, y = df_PM$ETpm_inweek)) +
+  geom_line()
+
+
+Weekly_ET_2000 <- df_PM %>%
+  ggplot(mapping = aes(x = WeekID, y = ETpm_inweek, color = Month)) +
+  geom_line()
+
+Weekly_ET_2000
 
