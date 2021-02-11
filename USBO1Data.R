@@ -72,6 +72,8 @@ library("dplyr")
 library("raster")
 library ("lubridate")
 library("rgdal")
+library("tidyverse")
+
 
 #data is databo1
 setwd("D:/Research/US_BO1_2_FluxTower/R")
@@ -95,7 +97,7 @@ names(DATA) <- NAMES
 
 #it worked!
 head(DATA)
-View(DATA)
+#View(DATA)
 
 #clone
 DATA1 <- DATA
@@ -114,13 +116,13 @@ DATA2 <- DATA1[- 1, ]
 #date data now looks like Y-m-d... couldn't get the time (hour/min) to work
 DATA2$TIMESTAMP_START <- as.Date(as.character(DATA2$TIMESTAMP_START), format="%Y%m%d")
 DATA2$TIMESTAMP_END <- as.Date(as.character(DATA2$TIMESTAMP_END), format = "%Y%m%d")
-View(DATA2)
+#View(DATA2)
 head(DATA2)
 DATA3 <- DATA2
 
 #lots of -9999 which are actually NAs
 DATA3[DATA3 == -9999] <- NA
-View(DATA3)
+#View(DATA3)
 
 #on to the averages
 #tutorial: https://www.earthdatascience.org/courses/earth-analytics/time-series-data/summarize-time-series-by-month-in-r/ 
@@ -175,22 +177,22 @@ DATA3$LW <- as.numeric(DATA3$LW)
 tail(DATA3)
 
 # plot the data using ggplot2 and pipes
-DATA3 %>%
-  ggplot(aes(x = TIMESTAMP_START, y = TA)) +
-  geom_point(color = "darkorchid4") +
-  labs(title = "Temperature (c) at the BO-1 Flux Site",
-       subtitle = "Illinois, 1996-2008",
-       y = "Temperature (C)",
-       x = "Date") + theme_bw(base_size = 15)
+#DATA3 %>%
+#  ggplot(aes(x = TIMESTAMP_START, y = TA)) +
+#  geom_point(color = "darkorchid4") +
+#  labs(title = "Temperature (c) at the BO-1 Flux Site",
+#       subtitle = "Illinois, 1996-2008",
+#       y = "Temperature (C)",
+#       x = "Date") + theme_bw(base_size = 15)
 
 
-DATA3 %>%
-  ggplot(aes(x = TIMESTAMP_START, y = VPD)) +
-  geom_point(color = "darkorchid4") +
-  labs(title = "VPD at the BO-1 Flux Site",
-       subtitle = "Illinois, 1996-2008",
-       y = "VPD (hPa)",
-       x = "Date") + theme_bw(base_size = 15)
+#DATA3 %>%
+#  ggplot(aes(x = TIMESTAMP_START, y = VPD)) +
+#  geom_point(color = "darkorchid4") +
+#  labs(title = "VPD at the BO-1 Flux Site",
+#       subtitle = "Illinois, 1996-2008",
+#       y = "VPD (hPa)",
+#       x = "Date") + theme_bw(base_size = 15)
 
 
 
@@ -205,7 +207,7 @@ head(DATA4)
 ##add column for end_year and end_month
 DATA4[, "end_year"] <- format(DATA4[,"TIMESTAMP_END"], "%Y")
 DATA4[, "end_month"] <- format(DATA4[,"TIMESTAMP_END"], "%m")
-View(DATA4)
+#View(DATA4)
 
 #add columns for weeks
 #data starts jan 1st, 1996, monday
@@ -215,7 +217,7 @@ View(DATA4)
 
 DATA4[, "start_week_year"] <- format(DATA4[,"TIMESTAMP_START"], "%G")
 DATA4[, "start_weekID"] <- format(DATA4[,"TIMESTAMP_START"], "%V")
-View(DATA4)
+#View(DATA4)
 
 ?strptime
 
@@ -227,7 +229,8 @@ mean_na <- function(x) {
   mean(x,na.rm=T)
 }
 
-#alot of data unavailable
+#alot of data unavailable .............. now this says "Error: Can't subset columns that don't exist. x Column `start_year` doesn't exist.
+
 DATA6 <- DATA5 %>% group_by(start_year) %>%       
   summarise_at(.vars = names(.)[1:50],.funs = mean,na.rm=TRUE)
 
@@ -243,7 +246,7 @@ head(DATA7)
 DATA8 <- DATA5 %>% group_by(start_weekID) %>%       
   summarise_at(.vars = names(.)[1:50],.funs = mean,na.rm=TRUE)
 
-View(DATA8)
+#View(DATA8)
 
 #################################
 
@@ -253,7 +256,7 @@ library(tidyverse)
 library(dplyr)
 
 Year_2000 <- DATA5 %>% filter(start_week_year == "2000")
-View(Year_2000)
+#View(Year_2000)
 summary(Year_2000)
 #all things are characters
 Year_2000$start_weekID <- as.numeric(Year_2000$start_weekID)
@@ -262,15 +265,18 @@ Year_2000$start_weekID <- as.numeric(Year_2000$start_weekID)
 
 
 #####This part of the code breaks the week ID, instead of it being 1:52, it turns into 1:12 and copies the months???
+#View(Year_2000)
+
 
 
 
 #average each week in year 2000; deletes year/month column... hmm.. 
-WeeklyAverage_2000 <- Year_2000 %>% group_by(Year_2000$start_weekID) %>%       
+WeeklyAverage_2000 <- Year_2000 %>% group_by(start_weekID) %>%       
   summarise_at(.vars = names(.)[1:100],.funs = mean,na.rm=TRUE)
 
-View(WeeklyAverage_2000)
 
+#View(WeeklyAverage_2000)
+#average each week in year 2000; deletes year/month column... hmm.. 
 #the function removes the year/month columns; redoing this from $TIMESTAMP_START
 dataWeeklyAverage_2000 <- as.data.frame(WeeklyAverage_2000)
 
@@ -281,7 +287,7 @@ dataWeeklyAverage_2000[, "Month"] <- format(dataWeeklyAverage_2000[,"TIMESTAMP_S
 lat <- 40.0062
 dataWeeklyAverage_2000$lat <- lat
 
-View(dataWeeklyAverage_2000)
+#View(dataWeeklyAverage_2000)
 
 #############################
 
@@ -421,7 +427,7 @@ ga <- df_PM$U * k^2 /((log((zm-zd)/zo) + psiH)^2) #m/s
 #Finally, find the reference surface conductance by inverting the penman monteith equation
 Gs <- gamma*df_PM$LE*ga / ( delta*df_PM$Rn + rho_a*cp*ga*df_PM$VPD - df_PM$LE*(delta+gamma) )                     
 df_PM$Gs <- Gs
-View(Gs)
+#View(Gs)
 
 
 #Gs m/s
