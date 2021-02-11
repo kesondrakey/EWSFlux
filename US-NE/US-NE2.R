@@ -368,7 +368,7 @@ et_1999_2014
 
 
 #why is this different? #Pre = Precipitation inch/7day
-ggplot(ET_1999_2014, aes(x = Year, y = Pre, label="Name"))+
+inchesrain <- ggplot(YearlyAvgET, aes(x = Year, y = Pre, label="Name"))+
   geom_point(size =3)+ #color="firebrick"
   labs(title = "US-NE2 Site: Average Weekly Precip (inches) (1999-2014)",
        subtitle = "Irrigated Maize-Soybean Rotation Site",
@@ -379,6 +379,8 @@ ggplot(ET_1999_2014, aes(x = Year, y = Pre, label="Name"))+
 
 #precip - averaged from daily mm
 g
+
+inchesrain
 
 
 
