@@ -1,11 +1,12 @@
 #US-NE2 (https://ameriflux.lbl.gov/sites/siteinfo/US-Ne2) 
 #irrigated maize-soybean rotation site
 #2001 - 2019
-
+#install.packages("ggplot2", dependencies=TRUE)
+#install.packages("colorspace")
 library("ggplot2")
 library("dplyr")
 library("raster")
-library ("lubridate")
+library ("lubridate") # use this for the data -> hh-mm-yy %%
 library("rgdal")
 library("tidyverse")
 
@@ -18,14 +19,12 @@ head(US_NE_Step_1)
 
 #Step 2. Clean up the data
 #Fix Time issues
-
+#Turn -9999 into NAs
+US_NE_Step_1[US_NE_Step_1 == -9999] <- NA
+US_NE_Step_1$TIMESTAMP_END <- as.Date(as.character(US_NE_Step_1$TIMESTAMP_END), format = "%Y%m%d")
 #Time looks like 199901010000 (YYYYMMDDHHMM) under TIMESTAMP_START/TIMESTAMP_END
 #Turn YYYYMMDDHHMM into YYYYMMDD
 US_NE_Step_1$TIMESTAMP_START <- as.Date(as.character(US_NE_Step_1$TIMESTAMP_START), format="%Y%m%d")
-US_NE_Step_1$TIMESTAMP_END <- as.Date(as.character(US_NE_Step_1$TIMESTAMP_END), format = "%Y%m%d")
-
-#Turn -9999 into NAs
-US_NE_Step_1[US_NE_Step_1 == -9999] <- NA
 
 ##add column for start_year and start_month; will use this for now
 US_NE_Step_1[, "Start_Year"] <- format(US_NE_Step_1[,"TIMESTAMP_START"], "%Y")
@@ -56,23 +55,48 @@ US_NE_Step_2 <- US_NE_Step_1
 
 head(US_NE_Step_2)
 
-#
+#Average all variables except for precipitation (sum this one)
+Yearly_Sum <- US_NE_Step_2 %>% group_by(Start_Week_Year) %>%
+  summarise_if(is.numeric,sum,na.rm=TRUE)
+head(Yearly_Sum)
+
+
 Yearly_US_NE2 <- US_NE_Step_2 %>% group_by(Start_Week_Year) %>%
   summarise_if(is.numeric,mean,na.rm=TRUE)
 head(Yearly_US_NE2)
 
+#delete averaged p and add in summed p (Yearly_Sum$p_1)
+#delete these from Yearly_US_NE2
+Yearly_US_NE2$P_1_1_1 <- NULL 
+Yearly_US_NE2$P_2_1_1 <- NULL 
+
+#Yearly_US_NE2$P_1_1_1 <- NULL 
+
+#add these to the averaged df (Yearly_US_NE2) 
+Yearly_US_NE2$P_1_1_1 <- Yearly_Sum$P_1_1_1
+Yearly_US_NE2$P_2_1_1 <- Yearly_Sum$P_2_1_1
+#Yearly_Sum$P_2_1_1
+head(Yearly_US_NE2)
+
+#remove 1998 due to lack of data
+Yearly_US_NE2 <- Yearly_US_NE2[-c(1), ]
+
+View(US_NE_Step_2)
+
 #Find Drought years; plot Precipitation (P_1_1_1) (mm) per year; 2010 and 2012 look like drought years
 ###how much yearly precip (mm) results in a "drought" year?
 
+
+
 g<-ggplot(Yearly_US_NE2, aes(x = Start_Week_Year, y = P_1_1_1, label="Name"))+
   geom_point(size =3)+ #color="firebrick"
-  labs(title = "US-NE2 Site: Average Precipitation (mm) (1998-2020)",
+  labs(title = "US-NE2 Site: Total Precipitation (mm) (1999-2020)",
        subtitle = "Irrigated Maize-Soybean Rotation Site",
        x = "Year",
-       y = "Average Precipitation (mm)")+
+       y = "Total Annual Precipitation (mm)")+
  #theme_dark()+
   theme_gray()+
-  geom_text(aes(label=ifelse(P_1_1_1<0.1,as.character(" < 0.1mm"),'')),hjust=0,vjust=0)
+  geom_text(aes(label=ifelse(P_1_1_1<800,as.character(" < 800mm"),'')),hjust=0,vjust=0)
 #+
  # geom_smooth(method = "lm") #attempt at adding a trendline: failed
 g
@@ -102,7 +126,7 @@ et_1999_2014
 ggplot(Yearly_US_NE2, aes(x= Start_Week_Year, y= P_1_1_1, colour="green", label="Name")) + 
   geom_point(size = 2,alpha = 0.6) +
   theme_bw()+
-  geom_text(aes(label=ifelse(P_1_1_1>.26,as.character(Name),'')),hjust=0,vjust=0)
+  geom_text(aes(label=ifelse(P_1_1_1<.26,as.character("Name"),'')),hjust=0,vjust=0)
 
 #VPD from the averaged raw data
 VPD1 <- ggplot(Yearly_US_NE2, aes(x = Start_Week_Year, y = VPD_PI_1_1_1, label="Name"))+
@@ -114,7 +138,7 @@ VPD1 <- ggplot(Yearly_US_NE2, aes(x = Start_Week_Year, y = VPD_PI_1_1_1, label="
   #theme_dark()+
   theme_gray()#+
 VPD1
-
+View(ET_1999_2014)
 
 #VPD from after calculating ET
 VPD <- ggplot(ET_1999_2014, aes(x = Year, y = VPD, label="Name"))+
@@ -132,25 +156,53 @@ VPD
 ###CALCULATE ET###
 
 #Take the weekly averages of each variable for each year and month
+#average some things and sum others (precip)
 Weekly_US_NE2 <- US_NE_Step_2 %>% group_by(Start_Week_Year, Start_weekID, Start_Month) %>%
   summarise_if(is.numeric,mean,na.rm=TRUE)
 head(Weekly_US_NE2)
+
+
+#Need to use total precipitation, not average.
+totalprecipUS_NE2 <- US_NE_Step_2 %>% group_by(Start_Week_Year, Start_weekID, Start_Month) %>%
+  summarise_if(is.numeric,sum,na.rm=TRUE)
+View(totalprecipUS_NE2)
+
+
+
+Weekly_US_NE2$P_1_1_1 <- NULL 
+Weekly_US_NE2$P_2_1_1 <- NULL 
+
+#Yearly_US_NE2$P_1_1_1 <- NULL 
+
+#add these to the averaged df (Yearly_US_NE2) 
+Weekly_US_NE2$P_1_1_1 <- totalprecipUS_NE2$P_1_1_1
+Weekly_US_NE2$P_2_1_1 <- totalprecipUS_NE2$P_2_1_1
+#Yearly_Sum$P_2_1_1
+head(Weekly_US_NE2)
+
+#remove 1998 due to lack of data
+Weekly_US_NE2 <- Weekly_US_NE2[-c(1), ]
+
+View(Weekly_US_NE2)
+
+
 #includes 1998 since 01-01-1999 and 01-02-1999 are a friday and saturday
-str(Weekly_US_NE2)
+View(Weekly_US_NE2)
+
 
 
 #Step 3. Calculate ET; Ameriflux variables are explained here: (https://ameriflux.lbl.gov/data/aboutdata/data-variables/#base)
 #Our Relevant Data
 
-#LE          (W m-2): Latent heat flux 
-#TA          (deg C): Air temperature;                   Qing's is Ta
-#PA          (kPa): Atmospheric pressure;                Qing's is pres
-#USTAR       (m s-1): Friction velocity;                 Qing's is ustar
-#H           (W m-2): Sensible heat flux
-#NETRAD      (W m-2): Net radiation;                     Qing's is Rn
-#VPD         (hPa): Vapor Pressure Deficit; 1hpa = 100pa
-#P           (mm): Precipitation
-#WS          (m s-1): Wind speed
+#LE          (W m-2): Latent heat flux                    Average
+#TA          (deg C): Air temperature;                    Average
+#PA          (kPa): Atmospheric pressure;                 Average
+#USTAR       (m s-1): Friction velocity;                  Average
+#H           (W m-2): Sensible heat flux                  Average
+#NETRAD      (W m-2): Net radiation;                      Average
+#VPD         (hPa): Vapor Pressure Deficit; 1hpa = 100pa  Average
+#P           (mm): Precipitation                          Sum
+#WS          (m s-1): Wind speed                          Average
 
 #For now, we will use _1_1_1 data since I'm not sure which height is the best
 # LE ->       LE_1_1_1
@@ -197,14 +249,15 @@ df_US_NE2$Hs <- Weekly_US_NE2$H_1_1_1 #Sensible heat turbulent flux (no storage 
 df_US_NE2$Rn <- Weekly_US_NE2$NETRAD_1_1_1  #net radiation; W m-2
 
 #VPD            (hPa or kpa; check note - assuming kpa for now): Vapor Pressure Deficit                     ##########SEE NOTE#######
-df_US_NE2$VPD <- Weekly_US_NE2$VPD_PI_1_1_1 #* 0.1 #from hPa to Kpa #Vapor Pressure Deficit, hPa; ###For all files with processing version 1, VPD_PI is provided in the units kPa (instead of hPa). I'm not sure which version US-MMS has
+df_US_NE2$VPD <- Weekly_US_NE2$VPD_PI_1_1_1 / 10 #from hPa to Kpa #Vapor Pressure Deficit, hPa; ###For all files with processing version 1, VPD_PI is provided in the units kPa (instead of hPa). I'm not sure which version US-MMS has
+#Sander/Kim: if values on are in the 10s, 20s, 30s then they are reported in hPa; divide by 10 for Kpa; looks like hpa! Divide... 
+#View(df_US_NE2$VPD)
 
 #P              (mm): Precipitation
 df_US_NE2$Pre <- Weekly_US_NE2$P_1_1_1 * 7 * 0.0394 #Precipitation inch/7day
 
 #WS             (m s-1): Wind speed
 df_US_NE2$U <- Weekly_US_NE2$WS_1_1_1 #Wind speed
-
 
 #Constants
 Elev <- 362 #in m, elevation data for air pressure calculation
@@ -261,6 +314,7 @@ ga <- df_US_NE2$U * k^2 /((log((zm-zd)/zo) + psiH)^2) #m/s
 #Finally, find the reference surface conductance by inverting the penman monteith equation
 Gs <- gamma*df_US_NE2$LE*ga / ( delta*df_US_NE2$Rn + rho_a*cp*ga*df_US_NE2$VPD - df_US_NE2$LE*(delta+gamma) )                     
 df_US_NE2$Gs <- Gs
+
 #Gs m/s
 #gamma kPa/K
 #LE W/m2 
@@ -325,23 +379,23 @@ ggplot(US_NE2_ET, aes(x = Year, y = ETpm_inweek)) +
        y = "ET Averaged (in/wk)")
 
 ###########################
-View(US_NE2_ET)
+#View(US_NE2_ET)
 
 ETAVG <- US_NE2_ET
 #Want to see average ET per Year
 #ETpm_mmday - mm ET per day
 
-#group by year
-head(ETAVG)
+#group by year (SUM) -> this will be for ET and Precip
+View(ETAVG)
 YearlyAvgET <- ETAVG %>% group_by(Year) %>%
-  summarise_if(is.numeric,mean,na.rm=TRUE)
-View(YearlyAvgET)
+  summarise_if(is.numeric,sum,na.rm=TRUE)
+#View(YearlyAvgET)
 #remove 1999 and 2015 from low data - outliers!
 #
 
 et<-ggplot(YearlyAvgET, aes(x = Year, y = ETpm_mmday, label="Name"))+
   geom_point(size =3)+ #color="firebrick"
-  labs(title = "US-NE2 Site: Average ET (mm) (1998-2020)",
+  labs(title = "US-NE2 Site: Sum ET (mm) (1998-2020)",
        subtitle = "Irrigated Maize-Soybean Rotation Site",
        x = "Year",
        y = "Penman-Monteith ET (mm/day)")+
@@ -352,46 +406,55 @@ et<-ggplot(YearlyAvgET, aes(x = Year, y = ETpm_mmday, label="Name"))+
 # geom_smooth(method = "lm") #attempt at adding a trendline: failed
 et
 
-tail(YearlyAvgET)
+head(YearlyAvgET)
 #remove 1998 (row 1) and 2015-2020 (row 18-23)... 
-ET_1999_2014 <- YearlyAvgET[-c(1, 18:23), ]
-
+ET_1999_2014 <- YearlyAvgET[-c(1, 17:23), ]
+#View(ET_1999_2014)
 et_1999_2014 <-ggplot(ET_1999_2014, aes(x = Year, y = ETpm_mmday, label="Name"))+
   geom_point(size =3)+ #color="firebrick"
-  labs(title = "US-NE2 Site: Average ET (mm) (1999-2014)",
+  labs(title = "US-NE2 Site: Total ET (mm) (2000-2014)",
        subtitle = "Irrigated Maize-Soybean Rotation Site",
        x = "Year",
-       y = "Penman-Monteith ET (mm/day)")+
+       y = "Total Penman-Monteith ET (mm)")+
   #theme_dark()+
   theme_gray()#+
 et_1999_2014
 
 
-#why is this different? #Pre = Precipitation inch/7day
+#why is this different? #Pre = Precipitation inch/7day ---> do sum not average
 inchesrain <- ggplot(YearlyAvgET, aes(x = Year, y = Pre, label="Name"))+
   geom_point(size =3)+ #color="firebrick"
-  labs(title = "US-NE2 Site: Average Weekly Precip (inches) (1999-2014)",
+  labs(title = "US-NE2 Site: Total Weekly Precip (inches) (1999-2014)",
        subtitle = "Irrigated Maize-Soybean Rotation Site",
        x = "Year",
-       y = "Average Weekly Precip (inches)")+
+       y = "Total Weekly Precip (inches)")+
   #theme_dark()+
   theme_gray()#+
 
 #precip - averaged from daily mm
 g
 
-inchesrain
+inchesrain #yay basically the same!
 
+#group by year
+View(ETAVG)
+VPD_Average <- ETAVG %>% group_by(Year) %>%
+  summarise_if(is.numeric,mean,na.rm=TRUE)
 
+VPD_Average_1999 <- VPD_Average[-c(1, 17:23), ]
+#View(
 
-#VPD
-VPD <- ggplot(ET_1999_2014, aes(x = Year, y = VPD, label="Name"))+
+#VPD (average - daily)
+VPD <- ggplot(VPD_Average_1999, aes(x = Year, y = VPD, label="Name"))+
   geom_point(size =3)+ #color="firebrick"
   labs(title = "US-NE2 Site: Average VPD (1999-2014)",
        subtitle = "Irrigated Maize-Soybean Rotation Site",
        x = "Year",
-       y = "VPD (hpa or kpa?)")+
+       y = "VPD (kpa)")+
   #theme_dark()+
   theme_gray()#+
 VPD
 
+
+
+#daily/monthly monthly
