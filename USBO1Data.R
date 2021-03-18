@@ -14,7 +14,7 @@
 #FC            (umolCO2 m-2 s-1): Carbon Dioxide (CO2) flux
 #SC            (umolCO2 m-2 s-1): Carbon Dioxide (CO2) storage flux
 #FCH4        (nmolCH4 m-2 s-1): Methane (CH4) flux
-#SCH4        (nmolCH4 m-2 s-1): Methane (CH4) storage flux
+#SCH4        (nmolCH4 m-2 s-1): Methane storage flux
 
 #-- HEAT
 #G           (W m-2): Soil heat flux
