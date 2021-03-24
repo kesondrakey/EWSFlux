@@ -225,6 +225,7 @@ df_AMF_USMMS$PETpt_inweek <- PETpt_inweek # Priestley-Taylor PET inch/week
 
 #Calculate Penman-Monteith ET
 ETpm_mmday <- 86400 * (delta*df_AMF_USMMS$Rn + rho_a*cp*ga*df_AMF_USMMS$VPD) / (( delta + gamma*(1+(ga/Gs))) * Lv)
+ETpm_inday <- ETpm_mmday * 0.03937 #inch/day
 ETpm_inweek <- ETpm_mmday * 7 * 0.03937 #inch/week
 df_AMF_USMMS$ETpm_mmday <- ETpm_mmday
 df_AMF_USMMS$ETpm_inweek <- ETpm_inweek 
