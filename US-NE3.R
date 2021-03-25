@@ -421,6 +421,16 @@ View(July_US_NE3_Data_2012)
 
 
 
+#How to fix daily ET:
+#Hey Kesondra,
+
+#Yes, you can make it to hourly ET. Just use hourly parameters in all your calculations. And then when you calculate ET, make sure to use “86400 / 24” for hourly instead of using “86400” in the following two lines, since there are 24 hours a day. Just feel free to let me know if you still have any questions. 
+
+#Here, 86400 is the number of total seconds in day. 
+#ETlv_mmday <- 86400 * df_PM$LE / Lv #kg/m2/s = 86400mm/day ET calculated directly from LE
+#ETpm_mmday <- 86400 * (delta*df_PM$Rn + rho_a*cp*ga*df_PM$VPD) / (( delta + gamma*(1+(ga/Gs))) * Lv)
+
+#-Qing
 
 
 
